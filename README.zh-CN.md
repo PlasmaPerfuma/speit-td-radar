@@ -80,6 +80,9 @@ python app\tdradar.py canvas poll --once --bootstrap
 # 之后：只下载新文件或更新过的文件
 python app\tdradar.py canvas poll --once --download
 
+# 自动下载 + 为新 sujet 生成详解 PDF
+python app\tdradar.py canvas poll --once --download --process
+
 # 持续轮询（5 分钟一次）
 python app\tdradar.py canvas poll --interval 300 --download
 
@@ -147,13 +150,13 @@ python -m unittest discover -s tests -p "test_*.py" -v
 - Windows 优先；路径和 `xelatex` 是 Windows 风格。
 - Canvas 课程 ID 目前硬编码为 SJTU 的（`app/canvas.py`）。
 - 打包后的 exe 仍调用系统 MiKTeX；Tectonic 还没内置。
-- Canvas 下载和 LLM 生成目前是两条命令，还没自动接线。
+- `--process` 已把下载和新 sujet 的生成接起来；corrigé 自动处理尚未开启。
 - 还没有计划任务、托盘、安装包、手机推送、OCR/VLM 回退。
 - 整份 TD 的端到端生成还没充分验证；样张主要验证单题。
 
 ## Roadmap
 
-- [ ] 把 `canvas poll --download` 接进 `pipeline.process_pdf`
+- [x] 把 `canvas poll --download` 接进 `pipeline.process_pdf`
 - [ ] 内置 Tectonic / 便携 LaTeX
 - [ ] Inno Setup per-user 安装包，不弹 UAC
 - [ ] Windows 计划任务 / 托盘 / 通知

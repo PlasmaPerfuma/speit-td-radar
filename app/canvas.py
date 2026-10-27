@@ -20,6 +20,7 @@ import urllib.request
 from pathlib import Path
 
 import paths
+import pipeline
 
 BASE = "https://oc.sjtu.edu.cn/api/v1"
 COURSES = {
@@ -155,9 +156,9 @@ def download(f: dict) -> Path:
 
 
 def run_once(download_new: bool = False, bootstrap: bool = False,
-             force: bool = False) -> list[dict]:
+             force: bool = False, process_new: bool = False) -> list[dict]:
     state = load_state()
-    changed = False
+    state_dirty = False
     new_items = []
     for cid in COURSES:
         try:
@@ -169,9 +170,10 @@ def run_once(download_new: bool = False, bootstrap: bool = False,
             key = f"{cid}:{f['id']}"
             old = state["files"].get(key)
             is_new = old is None
-            changed = old is not None and old.get("updated_at") != f["updated_at"]
-            if is_new or changed:
+            file_changed = old is not None and old.get("updated_at") != f["updated_at"]
+            if is_new or file_changed:
                 new_items.append(f)
+
             if bootstrap and not force:
                 if is_new:
                     log(f"baseline {COURSES[cid][1]} {f['td']} {f['kind']} {f['name']}")
@@ -180,32 +182,86 @@ def run_once(download_new: bool = False, bootstrap: bool = False,
                     "td": f["td"], "kind": f["kind"], "updated_at": f["updated_at"],
                     "downloaded": bool(old and old.get("downloaded")),
                     "baseline": True,
+                    "processed": bool(old and old.get("processed")),
+                    "processed_at": (old or {}).get("processed_at"),
+                    "output_path": (old or {}).get("output_path"),
                 }
-                changed = True
+                state_dirty = True
                 continue
-            if download_new and (
-                is_new or changed or force or
+
+            target = None
+            needs_download = download_new and (
+                is_new or file_changed or force or
                 (old is not None and not old.get("downloaded") and not old.get("baseline"))
-            ):
+            )
+            if needs_download:
                 try:
                     target = download(f)
-                    state["files"][key] = {
+                    entry = {
                         "course_id": cid, "file_id": f["id"], "name": f["name"],
                         "td": f["td"], "kind": f["kind"], "updated_at": f["updated_at"],
                         "downloaded": True, "baseline": False, "path": str(target),
+                        "processed": False, "processed_at": None,
+                        "output_path": None, "process_error": None,
                     }
-                    changed = True
+                    if not (is_new or file_changed or force) and old:
+                        entry["processed"] = bool(old.get("processed"))
+                        entry["processed_at"] = old.get("processed_at")
+                        entry["output_path"] = old.get("output_path")
+                    state["files"][key] = entry
+                    state_dirty = True
                 except Exception as exc:  # noqa: BLE001
                     log(f"download failed {f['name']}: {exc}")
-            elif is_new or changed:
+            elif is_new or file_changed:
                 log(f"new/updated (not downloaded) {COURSES[cid][1]} {f['td']} {f['kind']} {f['name']}")
                 state["files"][key] = {
                     "course_id": cid, "file_id": f["id"], "name": f["name"],
                     "td": f["td"], "kind": f["kind"], "updated_at": f["updated_at"],
                     "downloaded": False, "baseline": False,
+                    "processed": False, "processed_at": None,
+                    "output_path": None, "process_error": None,
                 }
-                changed = True
-    if changed:
+                state_dirty = True
+
+            if process_new and f["kind"] == "sujet":
+                path = target
+                if path is None and old and old.get("path"):
+                    path = Path(old["path"])
+                if path is None or not Path(path).exists():
+                    continue
+                already_done = bool(old and old.get("processed") and not file_changed and not force)
+                if already_done:
+                    continue
+                log(f"process {COURSES[cid][1]} {f['td']} {path}")
+                try:
+                    meta = pipeline.process_pdf(path, COURSES[cid][1], f["td"])
+                    entry = state["files"].setdefault(key, {
+                        "course_id": cid, "file_id": f["id"], "name": f["name"],
+                        "td": f["td"], "kind": f["kind"], "updated_at": f["updated_at"],
+                        "downloaded": True, "baseline": False, "path": str(path),
+                    })
+                    entry.update({
+                        "processed": True,
+                        "processed_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "output_path": meta.get("render", {}).get("pdf"),
+                        "process_error": None,
+                    })
+                    state_dirty = True
+                    log(f"processed -> {entry['output_path']}")
+                except Exception as exc:  # noqa: BLE001
+                    entry = state["files"].setdefault(key, {
+                        "course_id": cid, "file_id": f["id"], "name": f["name"],
+                        "td": f["td"], "kind": f["kind"], "updated_at": f["updated_at"],
+                        "downloaded": True, "baseline": False, "path": str(path),
+                    })
+                    entry.update({
+                        "processed": False,
+                        "process_error": str(exc)[:500],
+                    })
+                    state_dirty = True
+                    log(f"process failed {f['name']}: {exc}")
+
+    if state_dirty:
         save_state(state)
     log(f"poll done; {len(new_items)} new item(s)")
     return new_items
@@ -235,18 +291,34 @@ def cmd_download(args) -> int:
         return 1
     for f in hits:
         target = download(f)
-        state["files"][f"{f['course_id']}:{f['id']}"] = {
+        entry = {
             "course_id": f["course_id"], "file_id": f["id"], "name": f["name"],
             "td": f["td"], "kind": f["kind"], "updated_at": f["updated_at"],
             "downloaded": True, "baseline": False, "path": str(target),
+            "processed": False, "processed_at": None,
+            "output_path": None, "process_error": None,
         }
+        if getattr(args, "process", False) and f["kind"] == "sujet":
+            try:
+                meta = pipeline.process_pdf(target, COURSES[f["course_id"]][1], f["td"])
+                entry.update({
+                    "processed": True,
+                    "processed_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "output_path": meta.get("render", {}).get("pdf"),
+                })
+                log(f"processed -> {entry['output_path']}")
+            except Exception as exc:  # noqa: BLE001
+                entry["process_error"] = str(exc)[:500]
+                log(f"process failed {f['name']}: {exc}")
+        state["files"][f"{f['course_id']}:{f['id']}"] = entry
     save_state(state)
     return 0
 
 
 def cmd_poll(args) -> int:
     while True:
-        run_once(download_new=args.download, bootstrap=args.bootstrap, force=args.force)
+        run_once(download_new=args.download, bootstrap=args.bootstrap,
+                 force=args.force, process_new=args.process)
         if args.once:
             return 0
         time.sleep(max(30, args.interval))
@@ -263,6 +335,8 @@ def main(argv=None) -> int:
     pp.add_argument("--once", action="store_true")
     pp.add_argument("--interval", type=int, default=300)
     pp.add_argument("--download", action="store_true")
+    pp.add_argument("--process", action="store_true",
+                    help="after download, run the LLM->PDF pipeline for sujets")
     pp.add_argument("--bootstrap", action="store_true", help="mark current files as seen, no download")
     pp.add_argument("--force", action="store_true", help="download even if already seen")
     pp.set_defaults(func=cmd_poll)
@@ -270,6 +344,8 @@ def main(argv=None) -> int:
     pd = sub.add_parser("download", help="download files matching a name substring")
     pd.add_argument("--course", type=int, default=None)
     pd.add_argument("--match", required=True)
+    pd.add_argument("--process", action="store_true",
+                    help="run the LLM->PDF pipeline for matching sujets")
     pd.set_defaults(func=cmd_download)
 
     args = p.parse_args(argv)

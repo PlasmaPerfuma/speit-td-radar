@@ -80,6 +80,9 @@ python app\tdradar.py canvas poll --once --bootstrap
 # Later: download only new/updated files
 python app\tdradar.py canvas poll --once --download
 
+# Auto download + generate the detail PDF for new sujets
+python app\tdradar.py canvas poll --once --download --process
+
 # Continuous polling (5 minutes)
 python app\tdradar.py canvas poll --interval 300 --download
 
@@ -147,13 +150,13 @@ Tests are offline and do not require a Canvas token or an API key.
 - Windows-first; paths and `xelatex` are Windows-oriented.
 - Canvas course IDs are currently SJTU-specific (`app/canvas.py`).
 - The packaged exe still calls system MiKTeX; Tectonic is not bundled yet.
-- Canvas download and LLM generation are separate commands; auto-wiring is not finished.
+- `--process` wires download to generation for **sujets**; corrigé auto-processing is not enabled.
 - No scheduler, tray, installer, push notification, or OCR/VLM fallback yet.
 - Full-TD generation has not been validated end-to-end; the sample focuses on one exercise.
 
 ## Roadmap
 
-- [ ] Wire `canvas poll --download` into `pipeline.process_pdf`
+- [x] Wire `canvas poll --download` into `pipeline.process_pdf`
 - [ ] Bundle Tectonic / portable LaTeX
 - [ ] Inno Setup per-user installer, no UAC
 - [ ] Windows Task Scheduler / tray / notifications
