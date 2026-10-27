@@ -1,0 +1,8 @@
+{
+  "base_url": "https://api.example.com/v1",
+  "api_key": "sk-...",
+  "model": "model-name",
+  "max_tokens": 8000,
+  "timeout": 180,
+  "reasoning_effort": null
+}

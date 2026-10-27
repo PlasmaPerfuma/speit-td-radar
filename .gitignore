@@ -1,0 +1,46 @@
+# secrets / local data
+data/*
+!data/llm_config.example.json
+!data/canvas_token.example.txt
+!data/.gitkeep
+
+inbox/
+out/
+logs/
+reference/
+sample/
+prompts/
+
+# build / tools
+.tools/
+build/
+dist/
+*.spec
+*.egg-info/
+.venv/
+venv/
+
+# python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# generated PDFs/images
+*.pdf
+!docs/sample.pdf
+*.png
+!docs/sample.png
+*.log
+
+# one-off development scripts (keep only real tests)
+tests/run_*.py
+tests/render_*.py
+tests/make_*.py
+tests/probe_canvas.py
+tests/download_td7.py
+tests/try_*.py
+tests/debug_llm.py
+tests/tiny_models.py
+tests/test_gate.py

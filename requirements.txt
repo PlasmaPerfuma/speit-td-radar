@@ -1,0 +1,2 @@
+# No third-party runtime dependencies: the app uses the Python standard library.
+# Windows + a LaTeX engine (currently MiKTeX xelatex) are required at runtime.

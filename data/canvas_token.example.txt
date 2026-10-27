@@ -1,0 +1,3 @@
+# Example Canvas personal access token.
+# Copy to data/canvas_token.txt and replace with your own token.
+PASTE_CANVAS_TOKEN_HERE
