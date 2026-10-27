@@ -2,6 +2,8 @@
 
 **Turn Canvas TD PDFs into structured French/Chinese revision PDFs.**
 
+[简体中文](README.zh-CN.md) | **English**
+
 TD Radar watches Canvas courses, downloads newly published TD (travaux dirigés) files, extracts their text, checks the text layer, asks an LLM for a structured solution, and renders a compact LaTeX PDF.
 
 > Personal project, built for the SPEIT / SJTU Canvas workflow. Not affiliated with SJTU, Canvas, or DeepSeek.
@@ -35,8 +37,8 @@ TD Radar watches Canvas courses, downloads newly published TD (travaux dirigés)
 ## Setup
 
 ```powershell
-git clone <your-repo-url> td-radar
-cd td-radar
+git clone https://github.com/PlasmaPerfuma/speit-td-radar.git
+cd speit-td-radar
 
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
