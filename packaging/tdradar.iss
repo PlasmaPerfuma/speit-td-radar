@@ -30,6 +30,10 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Source: "..\dist\tdradar\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
 Source: "..\data\llm_config.example.json"; DestDir: "{userappdata}\TD Radar"; DestName: "llm_config.json"; Flags: onlyifdoesntexist uninsneveruninstall
 Source: "..\data\canvas_token.example.txt"; DestDir: "{userappdata}\TD Radar"; DestName: "canvas_token.txt"; Flags: onlyifdoesntexist uninsneveruninstall
+Source: "..\data\schedule.example.json"; DestDir: "{userappdata}\TD Radar"; DestName: "schedule.json"; Flags: onlyifdoesntexist uninsneveruninstall
+
+[Tasks]
+Name: "scheduledtask"; Description: "Create the Windows scheduled task (polling)"; GroupDescription: "Background:"; Flags: checkedonce
 
 [Icons]
 Name: "{group}\TD Radar"; Filename: "{app}\tdradar.exe"; Parameters: "doctor"; WorkingDir: "{app}"
@@ -37,6 +41,10 @@ Name: "{userdesktop}\TD Radar"; Filename: "{app}\tdradar.exe"; Parameters: "doct
 
 [Run]
 Filename: "{app}\tdradar.exe"; Parameters: "doctor"; Description: "Run TD Radar doctor"; Flags: postinstall nowait skipifsilent
+Filename: "{app}\tdradar.exe"; Parameters: "schedule install"; Description: "Register the scheduled task"; Flags: runhidden; Tasks: scheduledtask
+
+[UninstallRun]
+Filename: "{app}\tdradar.exe"; Parameters: "schedule uninstall"; Flags: runhidden
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"

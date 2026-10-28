@@ -74,6 +74,9 @@ def esc(text: str) -> str:
         "\\": r"\textbackslash{}", "&": r"\&", "%": r"\%", "#": r"\#",
         "_": r"\_", "{": r"\{", "}": r"\}", "~": r"\textasciitilde{}",
         "^": r"\textasciicircum{}",
+        # French typography: ' must not become a smart quote / be dropped.
+        "'": r"\textquotesingle{}",
+        "\u2019": r"\textquotesingle{}",
     }
     return "".join(table.get(ch, ch) for ch in str(text))
 

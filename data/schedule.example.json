@@ -1,0 +1,13 @@
+{
+  "task_name": "TD Radar Poll",
+  "command": "",
+  "arguments": "canvas poll --once --download --process",
+  "trigger": {
+    "type": "weekly",
+    "time": "11:30",
+    "weekdays": ["MON", "TUE"],
+    "interval_minutes": 5,
+    "until": "23:59",
+    "other_days_time": "12:00"
+  }
+}

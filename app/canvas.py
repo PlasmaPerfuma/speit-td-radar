@@ -36,8 +36,13 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 def log(msg: str) -> None:
     line = f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}"
     print(line, flush=True)
-    with (paths.LOGS / "canvas_poll.log").open("a", encoding="utf-8") as fh:
-        fh.write(line + "\n")
+    try:
+        paths.LOGS.mkdir(parents=True, exist_ok=True)
+        with (paths.LOGS / "canvas_poll.log").open("a", encoding="utf-8") as fh:
+            fh.write(line + "\n")
+    except OSError:
+        # Logging must never take down a poll run.
+        pass
 
 
 def token() -> str:

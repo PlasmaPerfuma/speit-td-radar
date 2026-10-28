@@ -27,4 +27,9 @@ TOKEN = DATA_DIR / "canvas_token.txt"
 LLM_CONFIG = DATA_DIR / "llm_config.json"
 
 for _d in (DATA_DIR, INBOX, CANVAS_INBOX, OUT, LOGS):
-    _d.mkdir(parents=True, exist_ok=True)
+    try:
+        _d.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        # A read-only or ACL-restricted data dir must not break `--help`,
+        # `doctor`, or config inspection; commands that write surface the error.
+        pass

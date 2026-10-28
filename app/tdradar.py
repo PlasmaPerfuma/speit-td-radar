@@ -14,6 +14,7 @@ sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent))
 import canvas  # noqa: E402
 import paths  # noqa: E402
 import pipeline  # noqa: E402
+import scheduler  # noqa: E402
 import td_render  # noqa: E402
 
 
@@ -74,6 +75,24 @@ def main(argv=None) -> int:
     pg.add_argument("--model", default=None)
     pg.add_argument("--max-tokens", type=int, default=None)
 
+    ps = sub.add_parser("schedule", help="Windows Task Scheduler integration")
+    pss = ps.add_subparsers(dest="schedule_cmd", required=True)
+    pss.add_parser("show", help="print the effective schedule config")
+    pss.add_parser("install", help="create/replace the scheduled task")
+    pss.add_parser("uninstall", help="remove the scheduled task")
+    pss.add_parser("status", help="show task state and next run")
+    pss.add_parser("ensure", help="install only if missing")
+    pend = pss.add_parser("set", help="edit schedule values, then save")
+    pend.add_argument("--time", default=None, help="HH:MM start on the main weekdays")
+    pend.add_argument("--weekdays", default=None, help="comma list: MON,TUE,...")
+    pend.add_argument("--interval-minutes", type=int, default=None,
+                      help="0 = once per day")
+    pend.add_argument("--until", default=None, help="HH:MM stop repeating")
+    pend.add_argument("--other-days-time", default=None, help="HH:MM or empty")
+    pend.add_argument("--task-name", default=None)
+    pend.add_argument("--command", default=None)
+    pend.add_argument("--arguments", default=None)
+
     args = p.parse_args(argv)
     if args.cmd == "doctor":
         return doctor()
@@ -84,6 +103,62 @@ def main(argv=None) -> int:
                                     out_dir=args.out, model=args.model,
                                     max_tokens=args.max_tokens)
         print(json.dumps(meta, ensure_ascii=False, indent=2))
+        return 0
+    if args.cmd == "schedule":
+        return schedule_cmd(args)
+    return 2
+
+
+def schedule_cmd(args) -> int:
+    cfg = scheduler.load_schedule()
+    cmd = args.schedule_cmd
+    if cmd == "show":
+        print(json.dumps(cfg, ensure_ascii=False, indent=2))
+        print(f"config file: {scheduler.SCHEDULE_PATH}")
+        return 0
+    if cmd == "set":
+        t = cfg["trigger"]
+        if args.time:
+            t["time"] = args.time
+        if args.weekdays is not None:
+            t["weekdays"] = [d.strip().upper() for d in args.weekdays.split(",") if d.strip()]
+        if args.interval_minutes is not None:
+            t["interval_minutes"] = args.interval_minutes
+        if args.until:
+            t["until"] = args.until
+        if args.other_days_time is not None:
+            t["other_days_time"] = args.other_days_time
+        if args.task_name:
+            cfg["task_name"] = args.task_name
+        if args.command:
+            cfg["command"] = args.command
+        if args.arguments:
+            cfg["arguments"] = args.arguments
+        path = scheduler.save_schedule(cfg)
+        print(json.dumps(cfg, ensure_ascii=False, indent=2))
+        print(f"saved: {path}")
+        if scheduler.status(cfg).get("installed"):
+            print("task was installed; run `tdradar schedule install` to apply the change")
+        return 0
+    if cmd == "install":
+        name = scheduler.install(cfg)
+        print(f"installed: {name}")
+        print(json.dumps(scheduler.status(cfg), ensure_ascii=False, indent=2))
+        return 0
+    if cmd == "uninstall":
+        scheduler.uninstall(cfg)
+        print("removed")
+        return 0
+    if cmd == "ensure":
+        info = scheduler.status(cfg)
+        if info.get("installed"):
+            print(f"already installed: {cfg['task_name']} ({info.get('state')})")
+            return 0
+        name = scheduler.install(cfg)
+        print(f"installed: {name}")
+        return 0
+    if cmd == "status":
+        print(json.dumps(scheduler.status(cfg), ensure_ascii=False, indent=2))
         return 0
     return 2
 

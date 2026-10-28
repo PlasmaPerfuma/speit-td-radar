@@ -101,6 +101,21 @@ python app\tdradar.py generate --pdf inbox\canvas\algebre\TD7\Algèbre_TD7_e.pdf
 - `td_detail.pdf`
 - `meta.json`
 
+## 计划任务（Windows Task Scheduler）
+
+计划规则存在 `data\schedule.json`，不在代码里写死，下学期直接改配置：
+
+```powershell
+python app\tdradar.py schedule show          # 查看当前生效配置
+python app\tdradar.py schedule set --time 08:00 --weekdays MON,WED,FRI --interval-minutes 5
+python app\tdradar.py schedule install       # 重新注册任务
+python app\tdradar.py schedule status        # 状态/上次运行/下次运行
+python app\tdradar.py schedule uninstall
+```
+
+默认：周一、周二 11:30 起每 5 分钟到 23:59，其他日期 12:00 跑一次；执行
+`canvas poll --once --download --process`。
+
 ## 架构
 
 ```text

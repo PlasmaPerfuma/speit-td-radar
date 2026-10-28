@@ -101,6 +101,21 @@ Outputs go to `out\<course>_<td>\`:
 - `td_detail.pdf`
 - `meta.json`
 
+## Scheduling (Windows Task Scheduler)
+
+Schedule rules live in `data\schedule.json`, not in code — change them every semester:
+
+```powershell
+python app\tdradar.py schedule show          # current effective config
+python app\tdradar.py schedule set --time 08:00 --weekdays MON,WED,FRI --interval-minutes 5
+python app\tdradar.py schedule install       # (re)register the task
+python app\tdradar.py schedule status        # state / last run / next run
+python app\tdradar.py schedule uninstall
+```
+
+Default: Monday+Tuesday from 11:30 every 5 minutes until 23:59, other days once
+at 12:00. The task runs `canvas poll --once --download --process`.
+
 ## Architecture
 
 ```text
