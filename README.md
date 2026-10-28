@@ -30,7 +30,7 @@ TD Radar watches Canvas courses, downloads newly published TD (travaux dirigés)
 
 - Windows 10/11
 - Python 3.12 (development)
-- A LaTeX engine: currently **MiKTeX `xelatex`**; Tectonic bundling is planned
+- A LaTeX engine: Tectonic (bundled in the packaged exe; dev uses `tools/tectonic/tectonic.exe`); MiKTeX `xelatex` is the fallback
 - A Canvas personal access token
 - An OpenAI-compatible DeepSeek endpoint + key
 
@@ -149,16 +149,29 @@ Tests are offline and do not require a Canvas token or an API key.
 
 - Windows-first; paths and `xelatex` are Windows-oriented.
 - Canvas course IDs are currently SJTU-specific (`app/canvas.py`).
-- The packaged exe still calls system MiKTeX; Tectonic is not bundled yet.
+- Tectonic is bundled in the exe; its first compile may download the bundle/cache.
 - `--process` wires download to generation for **sujets**; corrigé auto-processing is not enabled.
-- No scheduler, tray, installer, push notification, or OCR/VLM fallback yet.
+- No scheduler, tray, push notification, or OCR/VLM fallback yet.
 - Full-TD generation has not been validated end-to-end; the sample focuses on one exercise.
+
+## Build
+
+```powershell
+# Put tectonic.exe at tools\tectonic\tectonic.exe first
+.\packaging\build_exe.ps1
+& "C:\Program Files\Inno Setup 7\ISCC.exe" packaging\tdradar.iss
+```
+
+Outputs:
+
+- `dist\tdradar\tdradar.exe`
+- `dist\TD-Radar-Setup.exe` (per-user, no admin/UAC)
 
 ## Roadmap
 
 - [x] Wire `canvas poll --download` into `pipeline.process_pdf`
-- [ ] Bundle Tectonic / portable LaTeX
-- [ ] Inno Setup per-user installer, no UAC
+- [x] Bundle Tectonic / portable LaTeX
+- [x] Inno Setup per-user installer, no UAC
 - [ ] Windows Task Scheduler / tray / notifications
 - [ ] Generic Canvas base URL and course config
 - [ ] OCR/VLM fallback for broken text layers

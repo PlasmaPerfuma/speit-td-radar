@@ -13,6 +13,7 @@ prompts/
 
 # build / tools
 .tools/
+tools/tectonic/
 build/
 dist/
 *.spec

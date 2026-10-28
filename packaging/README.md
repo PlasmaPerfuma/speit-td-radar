@@ -2,12 +2,17 @@
 
 ## Console exe (PyInstaller onedir)
 
-Built artifact: `dist/tdradar/tdradar.exe` (24 MB onedir folder).
+Built artifact:
+
+- `dist\tdradar\tdradar.exe` (onedir, Tectonic bundled)
+- `dist\TD-Radar-Setup.exe` (Inno Setup 7, per-user)
 
 Rebuild:
 
 ```powershell
+# tectonic.exe must exist at tools\tectonic\tectonic.exe
 .\packaging\build_exe.ps1
+& "C:\Program Files\Inno Setup 7\ISCC.exe" packaging\tdradar.iss
 ```
 
 Smoke test (dev data dir):
@@ -32,8 +37,6 @@ The installer/first-run wizard should seed these from templates; not built yet.
 
 ## Still to do
 
-- Bundle a Tectonic sidecar (or detect MiKTeX); current exe calls system `xelatex`.
-- Inno Setup per-user installer (`PrivilegesRequired=lowest`).
 - Task Scheduler / Startup shortcut; tray; notifications.
-- Wire Canvas `poll --download` to `pipeline.process_pdf` automatically.
+- Wire Canvas `poll --download` to `pipeline.process_pdf` automatically (the CLI flag exists).
 - Phone push / AI chat / workflow interfaces.

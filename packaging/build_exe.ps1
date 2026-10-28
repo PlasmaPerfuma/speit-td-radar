@@ -13,9 +13,15 @@ if (-not (Test-Path ".tools\pyinstaller\PyInstaller")) {
         --target .tools\pyinstaller pyinstaller
 }
 
+$tectonic = Join-Path $root "tools\tectonic\tectonic.exe"
+if (-not (Test-Path $tectonic)) {
+    throw "Tectonic missing: put tectonic.exe in tools\tectonic\tectonic.exe"
+}
+
 $env:PYTHONPATH = "$root\.tools\pyinstaller"
 & $python -m PyInstaller --noconfirm --clean `
     --onedir --console --name tdradar `
+    --add-binary "tools\tectonic\tectonic.exe;tectonic" `
     --paths app --distpath dist --workpath build\pyinstaller `
     app\tdradar.py
 

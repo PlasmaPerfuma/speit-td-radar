@@ -17,12 +17,24 @@ import shutil
 import subprocess
 from pathlib import Path
 
-LATEX_CMD = os.environ.get("TD_RADAR_LATEX", "xelatex")
+import paths
+
+_BUNDLED_TECTONIC = [
+    paths.RESOURCE_DIR / "tectonic" / "tectonic.exe",
+    paths.RESOURCE_DIR / "tools" / "tectonic" / "tectonic.exe",
+]
+_BUNDLED = next((p for p in _BUNDLED_TECTONIC if p.exists()), None)
+LATEX_CMD = os.environ.get("TD_RADAR_LATEX", str(_BUNDLED) if _BUNDLED else "xelatex")
+LATEX_ENGINE = os.environ.get(
+    "TD_RADAR_LATEX_ENGINE",
+    "tectonic" if "tectonic" in Path(LATEX_CMD).name.lower() else "xelatex",
+).lower()
 _DEFAULT_MIKTEX = Path(r"C:\Users\admin\AppData\Local\Programs\MiKTeX\miktex\bin\x64")
 LATEX_BIN_DIR = Path(os.environ.get(
     "TD_RADAR_LATEX_BIN",
     str(_DEFAULT_MIKTEX) if _DEFAULT_MIKTEX.exists() else "",
 ))
+TECTONIC_CACHE = paths.DATA_DIR / "tectonic-cache"
 TOKEN = re.compile(r"(\$[^$]+\$)")
 
 PREAMBLE = r"""\documentclass[UTF8,a4paper,10pt]{ctexart}
@@ -245,19 +257,30 @@ def compile_tex(tex: Path, pdf: Path) -> dict:
     shutil.copyfile(tex, study)
     env = os.environ.copy()
     env["PATH"] = str(LATEX_BIN_DIR) + os.pathsep + env.get("PATH", "")
-    for pass_no in (1, 2):
-        code = _run([LATEX_CMD, "-interaction=nonstopmode", "-halt-on-error", "study.tex"],
-                    build / f"p{pass_no}.out", build, env)
+    if LATEX_ENGINE == "tectonic":
+        TECTONIC_CACHE.mkdir(parents=True, exist_ok=True)
+        env["TECTONIC_CACHE_DIR"] = str(TECTONIC_CACHE)
+        code = _run([LATEX_CMD, "-k", "--keep-logs", "-o", ".", "study.tex"],
+                    build / "tectonic.out", build, env)
         if code:
-            tail = (build / f"p{pass_no}.out").read_text(encoding="utf-8", errors="replace")[-3000:]
-            raise RuntimeError(f"xelatex pass {pass_no} failed ({code}):\n{tail}")
+            tail = (build / "tectonic.out").read_text(encoding="utf-8", errors="replace")[-3000:]
+            raise RuntimeError(f"tectonic failed ({code}):\n{tail}")
+    else:
+        for pass_no in (1, 2):
+            code = _run([LATEX_CMD, "-interaction=nonstopmode", "-halt-on-error", "study.tex"],
+                        build / f"p{pass_no}.out", build, env)
+            if code:
+                tail = (build / f"p{pass_no}.out").read_text(encoding="utf-8", errors="replace")[-3000:]
+                raise RuntimeError(f"xelatex pass {pass_no} failed ({code}):\n{tail}")
+    if not (build / "study.pdf").exists():
+        raise RuntimeError(f"{LATEX_ENGINE} produced no study.pdf")
     pdf.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(build / "study.pdf", pdf)
     log = (build / "study.log").read_text(encoding="utf-8", errors="replace")
     missing = log.count("Missing character")
     match = re.search(r"Output written on .*?\((\d+) pages?", log)
     pages = int(match.group(1)) if match else None
-    return {"pdf": str(pdf), "pages": pages, "missing_chars": missing}
+    return {"pdf": str(pdf), "pages": pages, "missing_chars": missing, "engine": LATEX_ENGINE}
 
 
 def render_json(json_path: Path, pdf_path: Path, tex_path: Path | None = None) -> dict:

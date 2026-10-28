@@ -30,7 +30,7 @@ TD Radar 会轮询 Canvas 课程，下载新发布的 TD（travaux dirigés）�
 
 - Windows 10/11
 - Python 3.12（开发）
-- LaTeX 引擎：目前是 **MiKTeX `xelatex`**；Tectonic 内置还在计划中
+- LaTeX 引擎：Tectonic（打包 exe 内置；开发期用 `tools/tectonic/tectonic.exe`）；MiKTeX `xelatex` 作为回退
 - Canvas personal access token
 - OpenAI 兼容的 DeepSeek 接口 + key
 
@@ -149,16 +149,29 @@ python -m unittest discover -s tests -p "test_*.py" -v
 
 - Windows 优先；路径和 `xelatex` 是 Windows 风格。
 - Canvas 课程 ID 目前硬编码为 SJTU 的（`app/canvas.py`）。
-- 打包后的 exe 仍调用系统 MiKTeX；Tectonic 还没内置。
+- Tectonic 已内置到 exe；第一次编译可能下载 bundle/cache。
 - `--process` 已把下载和新 sujet 的生成接起来；corrigé 自动处理尚未开启。
-- 还没有计划任务、托盘、安装包、手机推送、OCR/VLM 回退。
+- 还没有计划任务、托盘、手机推送、OCR/VLM 回退。
 - 整份 TD 的端到端生成还没充分验证；样张主要验证单题。
+
+## 构建
+
+```powershell
+# 先把 tectonic.exe 放到 tools\tectonic\tectonic.exe
+.\packaging\build_exe.ps1
+& "C:\Program Files\Inno Setup 7\ISCC.exe" packaging\tdradar.iss
+```
+
+输出：
+
+- `dist\tdradar\tdradar.exe`
+- `dist\TD-Radar-Setup.exe`（per-user，不弹 UAC）
 
 ## Roadmap
 
 - [x] 把 `canvas poll --download` 接进 `pipeline.process_pdf`
-- [ ] 内置 Tectonic / 便携 LaTeX
-- [ ] Inno Setup per-user 安装包，不弹 UAC
+- [x] 内置 Tectonic / 便携 LaTeX
+- [x] Inno Setup per-user 安装包，不弹 UAC
 - [ ] Windows 计划任务 / 托盘 / 通知
 - [ ] 泛化 Canvas base URL 与课程配置
 - [ ] 坏文本层的 OCR/VLM 回退
