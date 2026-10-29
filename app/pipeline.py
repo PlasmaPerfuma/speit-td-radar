@@ -8,6 +8,7 @@ import time
 from pathlib import Path
 
 import paths
+import notify
 from analyze import analyze
 from extract import extract
 from quality import gate
@@ -39,6 +40,17 @@ def process_pdf(pdf_path: str | Path, course: str, td: str,
         json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     result = render_json(out / "td_detail.json", out / "td_detail.pdf")
 
+    notify_result = None
+    try:
+        notify_result = notify.send(
+            f"{course} {td} 已生成",
+            f"{len(data.get('exercises', []))} 题，{result.get('pages')} 页，"
+            f"缺字 {result.get('missing_chars')}",
+            file=result.get("pdf"),
+        )
+    except Exception as exc:  # noqa: BLE001
+        notify_result = {"error": str(exc)}
+
     meta = {
         "source_pdf": str(pdf),
         "course": course,
@@ -47,6 +59,7 @@ def process_pdf(pdf_path: str | Path, course: str, td: str,
         "quality_gate": q,
         "usage": usage,
         "render": result,
+        "notify": notify_result,
         "exercises": [e.get("no") for e in data.get("exercises", [])],
     }
     (out / "meta.json").write_text(

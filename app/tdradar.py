@@ -7,11 +7,13 @@ import json
 import os
 import shutil
 import sys
+from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent))
 
 import canvas  # noqa: E402
+import notify  # noqa: E402
 import paths  # noqa: E402
 import pipeline  # noqa: E402
 import scheduler  # noqa: E402
@@ -93,6 +95,11 @@ def main(argv=None) -> int:
     pend.add_argument("--command", default=None)
     pend.add_argument("--arguments", default=None)
 
+    pn = sub.add_parser("notify", help="test notification channels")
+    pns = pn.add_subparsers(dest="notify_cmd", required=True)
+    pnt = pns.add_parser("test", help="send a test text (+ optional PDF)")
+    pnt.add_argument("--file", default=None, help="PDF to attach; default: latest td_detail.pdf")
+
     args = p.parse_args(argv)
     if args.cmd == "doctor":
         return doctor()
@@ -106,7 +113,34 @@ def main(argv=None) -> int:
         return 0
     if args.cmd == "schedule":
         return schedule_cmd(args)
+    if args.cmd == "notify":
+        return notify_cmd(args)
     return 2
+
+
+def latest_pdf() -> str | None:
+    roots = [paths.DATA_DIR / "out", paths.OUT]
+    files: list[Path] = []
+    for root in roots:
+        if root.exists():
+            files.extend(root.rglob("td_detail.pdf"))
+    if not files:
+        return None
+    return str(max(files, key=lambda p: p.stat().st_mtime))
+
+
+def notify_cmd(args) -> int:
+    if args.notify_cmd != "test":
+        return 2
+    cfg = notify.load_config()
+    if not cfg.get("enabled"):
+        print("notify disabled (check data/notify.json)")
+        return 1
+    file = args.file or latest_pdf()
+    result = notify.send("TD Radar 测试", "通知通道测试：如果你看到这条，说明已经通了。",
+                         file=file, cfg=cfg)
+    print(json.dumps({"file": file, "result": result}, ensure_ascii=False, indent=2))
+    return 0
 
 
 def schedule_cmd(args) -> int:

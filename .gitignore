@@ -3,6 +3,7 @@ data/*
 !data/llm_config.example.json
 !data/canvas_token.example.txt
 !data/schedule.example.json
+!data/notify.example.json
 !data/.gitkeep
 
 inbox/

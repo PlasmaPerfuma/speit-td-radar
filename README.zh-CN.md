@@ -116,6 +116,27 @@ python app\tdradar.py schedule uninstall
 默认：周一、周二 11:30 起每 5 分钟到 23:59，其他日期 12:00 跑一次；执行
 `canvas poll --once --download --process`。
 
+## 通知
+
+渲染完成后可以把 PDF 推到手机。配置 `data\notify.json`（已被 Git 忽略）：
+
+```json
+{
+  "enabled": true,
+  "provider": "wecom",
+  "send_file": true,
+  "wecom_webhook": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=..."
+}
+```
+
+不重新生成、只测试通知：
+
+```powershell
+python app\tdradar.py notify test
+```
+
+企业微信 provider 会发一条文字，并把最新的 `td_detail.pdf` 作为文件消息上传。
+
 ## 架构
 
 ```text

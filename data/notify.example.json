@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "provider": "wecom",
+  "send_file": true,
+  "title_prefix": "TD Radar",
+  "wecom_webhook": "PASTE_WECOM_WEBHOOK_HERE",
+  "bark_key": "",
+  "ntfy_topic": "",
+  "email": {
+    "smtp": "",
+    "port": 465,
+    "user": "",
+    "password": "",
+    "to": ""
+  }
+}

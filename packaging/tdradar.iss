@@ -31,6 +31,7 @@ Source: "..\dist\tdradar\*"; DestDir: "{app}"; Flags: recursesubdirs createallsu
 Source: "..\data\llm_config.example.json"; DestDir: "{userappdata}\TD Radar"; DestName: "llm_config.json"; Flags: onlyifdoesntexist uninsneveruninstall
 Source: "..\data\canvas_token.example.txt"; DestDir: "{userappdata}\TD Radar"; DestName: "canvas_token.txt"; Flags: onlyifdoesntexist uninsneveruninstall
 Source: "..\data\schedule.example.json"; DestDir: "{userappdata}\TD Radar"; DestName: "schedule.json"; Flags: onlyifdoesntexist uninsneveruninstall
+Source: "..\data\notify.example.json"; DestDir: "{userappdata}\TD Radar"; DestName: "notify.json"; Flags: onlyifdoesntexist uninsneveruninstall
 
 [Tasks]
 Name: "scheduledtask"; Description: "Create the Windows scheduled task (polling)"; GroupDescription: "Background:"; Flags: checkedonce

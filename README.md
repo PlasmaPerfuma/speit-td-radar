@@ -116,6 +116,27 @@ python app\tdradar.py schedule uninstall
 Default: Monday+Tuesday from 11:30 every 5 minutes until 23:59, other days once
 at 12:00. The task runs `canvas poll --once --download --process`.
 
+## Notifications
+
+After rendering, the PDF can be pushed to a phone. Configure `data\notify.json` (ignored by Git):
+
+```json
+{
+  "enabled": true,
+  "provider": "wecom",
+  "send_file": true,
+  "wecom_webhook": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=..."
+}
+```
+
+Test without regenerating anything:
+
+```powershell
+python app\tdradar.py notify test
+```
+
+The WeCom provider sends a text message and uploads the latest `td_detail.pdf` as a file message.
+
 ## Architecture
 
 ```text
