@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import getpass
 import json
 import os
 import shutil
@@ -65,6 +66,7 @@ def main(argv=None) -> int:
     sub = p.add_subparsers(dest="cmd", required=True)
 
     sub.add_parser("doctor", help="check token/api/latex/state")
+    sub.add_parser("setup", help="interactive first-run configuration")
 
     pc = sub.add_parser("canvas", help="Canvas list/poll/download")
     pc.add_argument("canvas_args", nargs=argparse.REMAINDER)
@@ -103,6 +105,8 @@ def main(argv=None) -> int:
     args = p.parse_args(argv)
     if args.cmd == "doctor":
         return doctor()
+    if args.cmd == "setup":
+        return setup_cmd()
     if args.cmd == "canvas":
         return canvas.main(args.canvas_args)
     if args.cmd == "generate":
@@ -116,6 +120,73 @@ def main(argv=None) -> int:
     if args.cmd == "notify":
         return notify_cmd(args)
     return 2
+
+
+def _ask(label: str, current: str = "", secret: bool = False) -> str:
+    suffix = "（已有，回车保留）" if current else ""
+    try:
+        value = (getpass.getpass(f"{label}{suffix}: ") if secret
+                 else input(f"{label}{suffix}: "))
+    except (EOFError, KeyboardInterrupt):
+        raise SystemExit("cancelled")
+    value = value.strip()
+    return value or current
+
+
+def setup_cmd() -> int:
+    print(f"data dir: {paths.DATA_DIR}")
+    print("直接回车 = 保留已有值\n")
+
+    old_token = ""
+    if paths.TOKEN.exists():
+        old_token = paths.TOKEN.read_text(encoding="utf-8", errors="replace").strip()
+    token = _ask("Canvas token", old_token, secret=True)
+    if not token:
+        print("Canvas token 为空，已取消")
+        return 1
+    paths.TOKEN.write_text(token + "\n", encoding="utf-8")
+
+    old_llm = {}
+    if paths.LLM_CONFIG.exists():
+        try:
+            old_llm = json.loads(paths.LLM_CONFIG.read_text(encoding="utf-8"))
+        except Exception:
+            old_llm = {}
+    base = _ask("DeepSeek base_url", old_llm.get("base_url", "https://api.deepseek.com"))
+    model = _ask("model", old_llm.get("model", "deepseek-flash"))
+    key = _ask("API key", old_llm.get("api_key", ""), secret=True)
+    max_tokens = _ask("max_tokens", str(old_llm.get("max_tokens", 100000)))
+    llm = {
+        "base_url": base,
+        "api_key": key,
+        "model": model,
+        "max_tokens": int(max_tokens or 100000),
+        "timeout": int(old_llm.get("timeout", 180)),
+        "reasoning_effort": old_llm.get("reasoning_effort"),
+    }
+    paths.LLM_CONFIG.write_text(json.dumps(llm, ensure_ascii=False, indent=2),
+                                encoding="utf-8")
+
+    old_notify = notify.load_config()
+    webhook = _ask("企业微信消息推送 webhook（可留空）",
+                   old_notify.get("wecom_webhook", ""), secret=True)
+    if webhook and "PASTE" not in webhook:
+        old_notify.update({
+            "enabled": True,
+            "provider": "wecom",
+            "wecom_webhook": webhook,
+            "send_file": True,
+        })
+        (paths.DATA_DIR / "notify.json").write_text(
+            json.dumps(old_notify, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    print("\n已写入：")
+    print(f"  {paths.TOKEN}")
+    print(f"  {paths.LLM_CONFIG}")
+    if webhook and "PASTE" not in webhook:
+        print(f"  {paths.DATA_DIR / 'notify.json'}")
+    print("\n下一步：tdradar doctor")
+    return 0
 
 
 def latest_pdf() -> str | None:

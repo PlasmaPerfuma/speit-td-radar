@@ -46,6 +46,9 @@ pip install -r requirements.txt
 
 copy data\llm_config.example.json data\llm_config.json
 copy data\canvas_token.example.txt data\canvas_token.txt
+
+# 可选：交互式首次配置（自动写上面两个文件）
+python app\tdradar.py setup
 ```
 
 编辑 `data\llm_config.json`：
