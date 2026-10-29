@@ -142,6 +142,8 @@ The WeCom provider sends a text message and uploads the latest `td_detail.pdf` a
 
 ## Control panel
 
+Windows shortcut: double-click `打开控制台.cmd` in the project root.
+
 ```powershell
 python app\tdradar.py panel
 # or: tdradar.exe panel

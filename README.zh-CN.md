@@ -142,6 +142,8 @@ python app\tdradar.py notify test
 
 ## 控制台
 
+Windows 下直接双击项目根目录的 `打开控制台.cmd`。
+
 ```powershell
 python app\tdradar.py panel
 # 或：tdradar.exe panel
