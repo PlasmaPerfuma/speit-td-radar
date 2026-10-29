@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TD Radar 控制台</title>
+<style>
+  :root { --bg:#f5f6f8; --card:#fff; --line:#dfe3e8; --text:#1f2937; --muted:#6b7280; --accent:#2563eb; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:14px/1.55 -apple-system,Segoe UI,Microsoft YaHei,sans-serif; background:var(--bg); color:var(--text); }
+  header { padding:18px 24px; background:#111827; color:#fff; display:flex; align-items:center; gap:14px; }
+  header h1 { font-size:17px; margin:0; font-weight:600; }
+  header small { color:#9ca3af; }
+  nav { display:flex; gap:4px; padding:10px 20px 0; background:#111827; }
+  nav button { border:0; background:transparent; color:#d1d5db; padding:9px 14px; border-radius:8px 8px 0 0; cursor:pointer; font-size:14px; }
+  nav button.active { background:var(--bg); color:var(--text); font-weight:600; }
+  main { max-width:1080px; margin:0 auto; padding:20px; }
+  section { display:none; }
+  section.active { display:block; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; }
+  .card h2 { font-size:14px; margin:0 0 10px; }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  label { display:block; color:var(--muted); font-size:12px; margin:10px 0 4px; }
+  input, select { width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:8px; font-size:14px; background:#fff; }
+  input[type=checkbox] { width:auto; }
+  button.primary { background:var(--accent); color:#fff; border:0; border-radius:8px; padding:9px 15px; cursor:pointer; }
+  button.ghost { background:#fff; color:var(--text); border:1px solid var(--line); border-radius:8px; padding:8px 13px; cursor:pointer; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  pre { background:#0b1220; color:#d1e0ff; padding:14px; border-radius:10px; overflow:auto; max-height:420px; font-size:12px; }
+  .muted { color:var(--muted); }
+  .pill { display:inline-block; padding:2px 8px; border-radius:999px; background:#eef2ff; color:#3730a3; font-size:12px; }
+  .ok { color:#047857; } .bad { color:#b91c1c; }
+  .status-list { display:grid; gap:8px; }
+  .status-list div { display:flex; justify-content:space-between; gap:12px; border-bottom:1px dashed var(--line); padding-bottom:6px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>TD Radar 控制台</h1>
+  <small id="dataDir"></small>
+</header>
+<nav>
+  <button data-tab="overview" class="active">概览</button>
+  <button data-tab="config">配置</button>
+  <button data-tab="schedule">计划任务</button>
+  <button data-tab="canvas">Canvas</button>
+  <button data-tab="logs">日志</button>
+</nav>
+<main>
+  <section id="overview" class="active">
+    <div class="grid">
+      <div class="card">
+        <h2>运行状态</h2>
+        <div id="status" class="status-list muted">加载中…</div>
+        <div class="row" style="margin-top:14px">
+          <button class="primary" id="runBtn">立即轮询并生成</button>
+          <button class="ghost" id="testBtn">测试通知</button>
+          <button class="ghost" id="refreshBtn">刷新</button>
+        </div>
+        <p class="muted" id="runHint"></p>
+      </div>
+      <div class="card">
+        <h2>配置摘要</h2>
+        <div id="summary" class="status-list muted">加载中…</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="config">
+    <div class="grid">
+      <div class="card">
+        <h2>Canvas 与 LLM</h2>
+        <label>Canvas token（留空保留）</label>
+        <input id="canvas_token" type="password" placeholder="已配置时留空">
+        <label>DeepSeek base_url</label>
+        <input id="llm_base_url">
+        <label>model</label>
+        <input id="llm_model">
+        <label>API key（留空保留）</label>
+        <input id="llm_api_key" type="password" placeholder="已配置时留空">
+        <label>max_tokens</label>
+        <input id="llm_max_tokens" type="number">
+      </div>
+      <div class="card">
+        <h2>通知</h2>
+        <label><input type="checkbox" id="notify_enabled"> 启用通知</label>
+        <label>provider</label>
+        <select id="notify_provider">
+          <option value="wecom">wecom</option>
+          <option value="bark">bark</option>
+          <option value="email">email</option>
+        </select>
+        <label>企业微信消息推送 webhook（留空保留）</label>
+        <input id="wecom_webhook" type="password" placeholder="已配置时留空">
+        <p class="muted">Bark / 邮件配置请编辑 data/notify.json；这里先覆盖最常用的 WeCom。</p>
+      </div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="primary" id="saveConfig">保存配置</button>
+      <span id="saveMsg" class="muted"></span>
+    </div>
+  </section>
+
+  <section id="schedule">
+    <div class="card">
+      <h2>计划任务</h2>
+      <div class="grid">
+        <div>
+          <label>主周几（MON,TUE）</label>
+          <input id="sched_weekdays">
+        </div>
+        <div>
+          <label>开始时间</label>
+          <input id="sched_time" placeholder="11:30">
+        </div>
+        <div>
+          <label>重复间隔（分钟，0=一次）</label>
+          <input id="sched_interval" type="number">
+        </div>
+        <div>
+          <label>重复到</label>
+          <input id="sched_until" placeholder="23:59">
+        </div>
+        <div>
+          <label>其他日期时间</label>
+          <input id="sched_other" placeholder="12:00">
+        </div>
+      </div>
+      <div class="row" style="margin-top:14px">
+        <button class="primary" id="saveSchedule">保存并重装</button>
+        <button class="ghost" id="scheduleStatus">刷新状态</button>
+        <span id="schedMsg" class="muted"></span>
+      </div>
+      <pre id="schedStatus"></pre>
+    </div>
+  </section>
+
+  <section id="canvas">
+    <div class="card">
+      <h2>Canvas 文件</h2>
+      <div class="row"><button class="ghost" id="loadCanvas">加载课程文件</button><span id="canvasMsg" class="muted"></span></div>
+      <pre id="canvasList">点击加载</pre>
+    </div>
+  </section>
+
+  <section id="logs">
+    <div class="card">
+      <h2>轮询日志</h2>
+      <div class="row"><button class="ghost" id="loadLogs">刷新日志</button></div>
+      <pre id="logsBox" style="margin-top:12px">加载中…</pre>
+    </div>
+  </section>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.error || r.statusText);
+  return data;
+}
+function setTab(name) {
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('section').forEach(s => s.classList.toggle('active', s.id === name));
+}
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  setTab(b.dataset.tab);
+  if (b.dataset.tab === 'logs') loadLogs();
+  if (b.dataset.tab === 'schedule') loadSchedule();
+});
+async function loadStatus() {
+  const s = await api('/api/status');
+  $('dataDir').textContent = s.data_dir;
+  const rows = [
+    ['数据目录', s.data_dir],
+    ['Token', s.token_set ? '已配置' : '未配置'],
+    ['LLM', `${s.llm.base_url || '-'} / ${s.llm.model || '-'}`],
+    ['通知', s.notify.enabled ? `${s.notify.provider}（已启用）` : '未启用'],
+    ['Canvas state', `${s.canvas_files} 个文件`],
+    ['最新 PDF', s.latest_pdf || '暂无'],
+    ['任务状态', s.schedule?.state || s.schedule?.error || '未知'],
+    ['下次运行', s.schedule?.next_run || '-'],
+    ['当前运行', s.running ? '正在运行' : '空闲'],
+  ];
+  $('status').innerHTML = rows.map(([k, v]) => `<div><span>${k}</span><span>${v}</span></div>`).join('');
+  $('summary').innerHTML = rows.slice(0, 6).map(([k, v]) => `<div><span>${k}</span><span>${v}</span></div>`).join('');
+}
+async function loadConfig() {
+  const c = await api('/api/config');
+  $('llm_base_url').value = c.llm.base_url || '';
+  $('llm_model').value = c.llm.model || '';
+  $('llm_max_tokens').value = c.llm.max_tokens || '';
+  $('notify_enabled').checked = !!c.notify.enabled;
+  $('notify_provider').value = c.notify.provider || 'wecom';
+  $('canvas_token').placeholder = c.token_set ? '已配置，留空保留' : '未配置';
+  $('llm_api_key').placeholder = c.llm.api_key_set ? '已配置，留空保留' : '未配置';
+  $('wecom_webhook').placeholder = c.notify.wecom_set ? '已配置，留空保留' : '未配置';
+}
+async function saveConfig() {
+  $('saveMsg').textContent = '保存中…';
+  try {
+    await api('/api/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+      canvas_token: $('canvas_token').value,
+      llm_base_url: $('llm_base_url').value,
+      llm_model: $('llm_model').value,
+      llm_api_key: $('llm_api_key').value,
+      llm_max_tokens: $('llm_max_tokens').value,
+      notify_enabled: $('notify_enabled').checked,
+      notify_provider: $('notify_provider').value,
+      wecom_webhook: $('wecom_webhook').value,
+    })});
+    $('saveMsg').textContent = '已保存';
+    await loadStatus(); await loadConfig();
+  } catch (e) { $('saveMsg').textContent = '保存失败：' + e.message; }
+}
+async function loadSchedule() {
+  const s = await api('/api/schedule');
+  const t = s.config.trigger;
+  $('sched_weekdays').value = t.weekdays.join(',');
+  $('sched_time').value = t.time;
+  $('sched_interval').value = t.interval_minutes;
+  $('sched_until').value = t.until;
+  $('sched_other').value = t.other_days_time || '';
+  $('schedStatus').textContent = JSON.stringify(s.status, null, 2);
+}
+async function saveSchedule() {
+  $('schedMsg').textContent = '保存中…';
+  try {
+    const r = await api('/api/schedule', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+      weekdays: $('sched_weekdays').value, time: $('sched_time').value,
+      interval_minutes: Number($('sched_interval').value),
+      until: $('sched_until').value, other_days_time: $('sched_other').value,
+      install: true,
+    })});
+    $('schedMsg').textContent = '已保存并重装';
+    $('schedStatus').textContent = JSON.stringify(r.status, null, 2);
+  } catch (e) { $('schedMsg').textContent = '失败：' + e.message; }
+}
+async function loadLogs() {
+  try { const r = await api('/api/logs'); $('logsBox').textContent = r.log || '(空)'; }
+  catch (e) { $('logsBox').textContent = '读取失败：' + e.message; }
+}
+async function loadCanvas() {
+  $('canvasMsg').textContent = '加载中…';
+  try { const r = await api('/api/canvas'); $('canvasList').textContent = JSON.stringify(r, null, 2); $('canvasMsg').textContent = ''; }
+  catch (e) { $('canvasMsg').textContent = '失败：' + e.message; }
+}
+$('runBtn').onclick = async () => {
+  $('runBtn').disabled = true; $('runHint').textContent = '已启动，后台运行中…';
+  try { await api('/api/run', {method:'POST'}); await loadStatus(); }
+  catch (e) { $('runHint').textContent = '启动失败：' + e.message; }
+  finally { $('runBtn').disabled = false; }
+};
+$('testBtn').onclick = async () => {
+  $('runHint').textContent = '发送测试通知…';
+  try { const r = await api('/api/notify/test', {method:'POST'}); $('runHint').textContent = JSON.stringify(r); }
+  catch (e) { $('runHint').textContent = '失败：' + e.message; }
+};
+$('refreshBtn').onclick = loadStatus;
+$('saveConfig').onclick = saveConfig;
+$('saveSchedule').onclick = saveSchedule;
+$('scheduleStatus').onclick = loadSchedule;
+$('loadLogs').onclick = loadLogs;
+$('loadCanvas').onclick = loadCanvas;
+loadStatus(); loadConfig(); loadLogs();
+</script>
+</body>
+</html>

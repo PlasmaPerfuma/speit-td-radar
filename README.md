@@ -140,6 +140,25 @@ python app\tdradar.py notify test
 
 The WeCom provider sends a text message and uploads the latest `td_detail.pdf` as a file message.
 
+## Control panel
+
+```powershell
+python app\tdradar.py panel
+# or: tdradar.exe panel
+```
+
+Opens a local browser panel at `http://127.0.0.1:8765/`:
+
+- status: token/LLM/notify/schedule/last output
+- edit Canvas token, DeepSeek settings, WeCom webhook
+- schedule editor + reinstall
+- Canvas file list
+- poll log tail
+- run now / send test notification
+
+The UI is a single `panel/index.html`; adding a feature means adding a route in
+`app/panel.py` and a tab in the HTML.
+
 ## Architecture
 
 ```text

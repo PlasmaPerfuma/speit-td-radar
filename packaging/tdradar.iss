@@ -35,13 +35,15 @@ Source: "..\data\notify.example.json"; DestDir: "{userappdata}\TD Radar"; DestNa
 
 [Tasks]
 Name: "scheduledtask"; Description: "Create the Windows scheduled task (polling)"; GroupDescription: "Background:"; Flags: checkedonce
+Name: "runsetup"; Description: "Run first-time setup now"; GroupDescription: "First run:"; Flags: checkedonce
 
 [Icons]
 Name: "{group}\TD Radar"; Filename: "{app}\tdradar.exe"; Parameters: "doctor"; WorkingDir: "{app}"
+Name: "{group}\TD Radar 控制台"; Filename: "{app}\tdradar.exe"; Parameters: "panel"; WorkingDir: "{app}"
 Name: "{userdesktop}\TD Radar"; Filename: "{app}\tdradar.exe"; Parameters: "doctor"; WorkingDir: "{app}"
 
 [Run]
-Filename: "{app}\tdradar.exe"; Parameters: "doctor"; Description: "Run TD Radar doctor"; Flags: postinstall nowait skipifsilent
+Filename: "{app}\tdradar.exe"; Parameters: "setup"; Description: "Run first-time setup"; Flags: postinstall; Tasks: runsetup
 Filename: "{app}\tdradar.exe"; Parameters: "schedule install"; Description: "Register the scheduled task"; Flags: runhidden; Tasks: scheduledtask
 
 [UninstallRun]

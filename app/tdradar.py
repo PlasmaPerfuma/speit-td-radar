@@ -15,6 +15,7 @@ sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent))
 
 import canvas  # noqa: E402
 import notify  # noqa: E402
+import panel  # noqa: E402
 import paths  # noqa: E402
 import pipeline  # noqa: E402
 import scheduler  # noqa: E402
@@ -67,6 +68,10 @@ def main(argv=None) -> int:
 
     sub.add_parser("doctor", help="check token/api/latex/state")
     sub.add_parser("setup", help="interactive first-run configuration")
+    pp = sub.add_parser("panel", help="start the local browser control panel")
+    pp.add_argument("--host", default="127.0.0.1")
+    pp.add_argument("--port", type=int, default=8765)
+    pp.add_argument("--no-browser", action="store_true")
 
     pc = sub.add_parser("canvas", help="Canvas list/poll/download")
     pc.add_argument("canvas_args", nargs=argparse.REMAINDER)
@@ -107,6 +112,9 @@ def main(argv=None) -> int:
         return doctor()
     if args.cmd == "setup":
         return setup_cmd()
+    if args.cmd == "panel":
+        return panel.main(host=args.host, port=args.port,
+                          open_browser=not args.no_browser)
     if args.cmd == "canvas":
         return canvas.main(args.canvas_args)
     if args.cmd == "generate":

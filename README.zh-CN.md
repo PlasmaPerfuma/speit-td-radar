@@ -140,6 +140,24 @@ python app\tdradar.py notify test
 
 企业微信 provider 会发一条文字，并把最新的 `td_detail.pdf` 作为文件消息上传。
 
+## 控制台
+
+```powershell
+python app\tdradar.py panel
+# 或：tdradar.exe panel
+```
+
+在 `http://127.0.0.1:8765/` 打开本地网页控制台：
+
+- 状态：token / LLM / 通知 / 计划任务 / 最新 PDF
+- 修改 Canvas token、DeepSeek、企业微信 webhook
+- 计划任务编辑 + 重装
+- Canvas 文件列表
+- 轮询日志
+- 立即运行 / 测试通知
+
+UI 是单文件 `panel/index.html`；加功能 = 在 `app/panel.py` 加路由 + 在 HTML 加 tab。
+
 ## 架构
 
 ```text
