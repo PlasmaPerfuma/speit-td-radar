@@ -149,7 +149,7 @@ python app\tdradar.py panel
 # or: tdradar.exe panel
 ```
 
-Opens a local browser panel at `http://127.0.0.1:8765/`:
+Opens a native pywebview window (no browser tabs); if pywebview is unavailable it falls back to a Chrome/Edge app window or the default browser at `http://127.0.0.1:8765/`:
 
 - status: token/LLM/notify/schedule/last output
 - edit Canvas token, DeepSeek settings, WeCom webhook

@@ -23,6 +23,7 @@ $env:PYTHONPATH = "$root\.tools\pyinstaller"
     --onedir --console --name tdradar `
     --add-binary "tools\tectonic\tectonic.exe;tectonic" `
     --add-data "panel;panel" `
+    --hidden-import webview --collect-all webview `
     --paths app --distpath dist --workpath build\pyinstaller `
     app\tdradar.py
 

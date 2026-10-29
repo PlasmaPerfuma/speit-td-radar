@@ -72,6 +72,9 @@ def main(argv=None) -> int:
     pp.add_argument("--host", default="127.0.0.1")
     pp.add_argument("--port", type=int, default=8765)
     pp.add_argument("--no-browser", action="store_true")
+    pp.add_argument("--browser", action="store_true",
+                    help="use a browser tab instead of the native pywebview window")
+    pp.add_argument("--hide-console", action="store_true")
 
     pc = sub.add_parser("canvas", help="Canvas list/poll/download")
     pc.add_argument("canvas_args", nargs=argparse.REMAINDER)
@@ -114,7 +117,9 @@ def main(argv=None) -> int:
         return setup_cmd()
     if args.cmd == "panel":
         return panel.main(host=args.host, port=args.port,
-                          open_browser=not args.no_browser)
+                          open_browser=not args.no_browser,
+                          gui=not args.browser,
+                          hide_console=args.hide_console)
     if args.cmd == "canvas":
         return canvas.main(args.canvas_args)
     if args.cmd == "generate":

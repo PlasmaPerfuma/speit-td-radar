@@ -7,12 +7,12 @@ set "INSTALLED=%LOCALAPPDATA%\Programs\TD Radar\tdradar.exe"
 
 if exist "%~dp0dist\tdradar\tdradar.exe" (
     set "TD_RADAR_DATA=%~dp0data"
-    start "" /min "%~dp0dist\tdradar\tdradar.exe" panel
+    start "" /min "%~dp0dist\tdradar\tdradar.exe" panel --hide-console
     exit /b 0
 )
 
 if exist "%INSTALLED%" (
-    start "" /min "%INSTALLED%" panel
+    start "" /min "%INSTALLED%" panel --hide-console
     exit /b 0
 )
 
@@ -25,5 +25,5 @@ if errorlevel 1 (
 )
 
 set "TD_RADAR_DATA=%~dp0data"
-start "" /min python "%~dp0app\tdradar.py" panel
+start "" /min python "%~dp0app\tdradar.py" panel --hide-console
 exit /b 0

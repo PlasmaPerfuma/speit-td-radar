@@ -279,11 +279,57 @@ class Handler(BaseHTTPRequestHandler):
             self._json({"error": str(exc)}, 500)
 
 
-def main(host: str = "127.0.0.1", port: int = 8765, open_browser: bool = True) -> int:
-    server = ThreadingHTTPServer((host, port), Handler)
+def create_server(host: str, port: int) -> ThreadingHTTPServer:
+    return ThreadingHTTPServer((host, port), Handler)
+
+
+def _hide_console() -> None:
+    if os.name != "nt":
+        return
+    try:
+        import ctypes
+        hwnd = ctypes.windll.kernel32.GetConsoleWindow()
+        if hwnd:
+            ctypes.windll.user32.ShowWindow(hwnd, 0)
+    except Exception:
+        pass
+
+
+def main(host: str = "127.0.0.1", port: int = 8765,
+         open_browser: bool = True, gui: bool = True,
+         hide_console: bool = False) -> int:
+    if hide_console:
+        _hide_console()
+    server = create_server(host, port)
     url = f"http://{host}:{port}/"
     print(f"TD Radar control panel: {url}")
     print("Ctrl+C to stop")
+
+    if gui:
+        try:
+            import webview  # pywebview
+        except Exception as exc:  # noqa: BLE001
+            print(f"pywebview unavailable ({exc}); falling back to browser")
+        else:
+            try:
+                webview.create_window(
+                    "TD Radar 控制台", url,
+                    width=1120, height=840, min_size=(860, 620),
+                )
+                webview.start()
+                return 0
+            except Exception as exc:  # noqa: BLE001
+                print(f"pywebview window failed ({exc}); falling back to browser")
+            finally:
+                server.shutdown()
+                server.server_close()
+
+    # Browser fallback. `server` may already be shut down after a failed
+    # pywebview attempt, so create a fresh one.
+    try:
+        server = create_server(host, port)
+    except OSError:
+        pass
     if open_browser:
         threading.Thread(target=lambda: (time.sleep(1.0), open_app_window(url)),
                          daemon=True).start()

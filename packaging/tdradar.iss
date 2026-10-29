@@ -39,7 +39,7 @@ Name: "runsetup"; Description: "Run first-time setup now"; GroupDescription: "Fi
 
 [Icons]
 Name: "{group}\TD Radar"; Filename: "{app}\tdradar.exe"; Parameters: "doctor"; WorkingDir: "{app}"
-Name: "{group}\TD Radar 控制台"; Filename: "{app}\tdradar.exe"; Parameters: "panel"; WorkingDir: "{app}"
+Name: "{group}\TD Radar 控制台"; Filename: "{app}\tdradar.exe"; Parameters: "panel --hide-console"; WorkingDir: "{app}"
 Name: "{userdesktop}\TD Radar"; Filename: "{app}\tdradar.exe"; Parameters: "doctor"; WorkingDir: "{app}"
 
 [Run]

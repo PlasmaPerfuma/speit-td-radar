@@ -149,7 +149,7 @@ python app\tdradar.py panel
 # 或：tdradar.exe panel
 ```
 
-在 `http://127.0.0.1:8765/` 打开本地网页控制台：
+打开 pywebview 原生窗口（无浏览器标签页）；pywebview 不可用时回退 Chrome/Edge app 窗口或默认浏览器 `http://127.0.0.1:8765/`：
 
 - 状态：token / LLM / 通知 / 计划任务 / 最新 PDF
 - 修改 Canvas token、DeepSeek、企业微信 webhook
