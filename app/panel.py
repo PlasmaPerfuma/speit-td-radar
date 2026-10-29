@@ -8,6 +8,9 @@ static page; adding a feature means adding a route here and a tab in
 from __future__ import annotations
 
 import json
+import os
+import shutil
+import subprocess
 import threading
 import time
 import urllib.parse
@@ -23,6 +26,35 @@ import scheduler
 PANEL_HTML = paths.RESOURCE_DIR / "panel" / "index.html"
 RUNNING = False
 RUN_LOCK = threading.Lock()
+
+
+def open_app_window(url: str) -> bool:
+    """Open the panel as a standalone Edge/Chrome app window.
+
+    A normal webbrowser.open() gives a tab; --app gives a window without the
+    browser chrome, which is much closer to a desktop control panel.
+    """
+    candidates = [
+        shutil.which("msedge"),
+        os.path.join(os.environ.get("ProgramFiles(x86)", ""),
+                     "Microsoft", "Edge", "Application", "msedge.exe"),
+        os.path.join(os.environ.get("ProgramFiles", ""),
+                     "Microsoft", "Edge", "Application", "msedge.exe"),
+        shutil.which("chrome"),
+        os.path.join(os.environ.get("ProgramFiles", ""),
+                     "Google", "Chrome", "Application", "chrome.exe"),
+    ]
+    for exe in candidates:
+        if not exe or not os.path.isfile(exe):
+            continue
+        try:
+            subprocess.Popen([exe, f"--app={url}", "--window-size=1100,820"],
+                             close_fds=True)
+            return True
+        except OSError:
+            continue
+    webbrowser.open(url)
+    return False
 
 
 def _read_json(path: Path, default: dict) -> dict:
@@ -253,7 +285,7 @@ def main(host: str = "127.0.0.1", port: int = 8765, open_browser: bool = True) -
     print(f"TD Radar control panel: {url}")
     print("Ctrl+C to stop")
     if open_browser:
-        threading.Thread(target=lambda: (time.sleep(0.6), webbrowser.open(url)),
+        threading.Thread(target=lambda: (time.sleep(1.0), open_app_window(url)),
                          daemon=True).start()
     try:
         server.serve_forever()
