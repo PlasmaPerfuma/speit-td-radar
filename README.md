@@ -101,8 +101,10 @@ Outputs go to `out\<course>_<td>\`:
 
 - `llm_raw.json`
 - `td_detail.json`
-- `td_detail.pdf`
+- `Algèbre_I_TD7_解答.pdf`（subject + TD + 解答）
 - `meta.json`
+
+Embedded raster figures from the original PDF are copied into `figures/` and inserted after the translated statement.
 
 ## Scheduling (Windows Task Scheduler)
 
@@ -138,7 +140,7 @@ Test without regenerating anything:
 python app\tdradar.py notify test
 ```
 
-The WeCom provider sends a text message and uploads the latest `td_detail.pdf` as a file message.
+The WeCom provider sends a text message and uploads the latest `*_解答.pdf` as a file message.
 
 ## Control panel
 
@@ -172,7 +174,7 @@ Canvas API ──► app/canvas.py ──► data/canvas_state.json
 app/pipeline.py ──► extract.py ──► quality.py ──► analyze.py ──► td_render.py
                                                           │
                                                           ▼
-                                                    out/.../td_detail.pdf
+                                                    out/.../Algèbre_I_TD7_解答.pdf
 ```
 
 | Path | Role |

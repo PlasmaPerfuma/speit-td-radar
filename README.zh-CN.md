@@ -101,8 +101,10 @@ python app\tdradar.py generate --pdf inbox\canvas\algebre\TD7\Algèbre_TD7_e.pdf
 
 - `llm_raw.json`
 - `td_detail.json`
-- `td_detail.pdf`
+- `Algèbre_I_TD7_解答.pdf`（学科 + TD + 解答）
 - `meta.json`
+
+原 PDF 中的位图插图会复制到 `figures/`，并插在题目翻译之后。
 
 ## 计划任务（Windows Task Scheduler）
 
@@ -138,7 +140,7 @@ python app\tdradar.py schedule uninstall
 python app\tdradar.py notify test
 ```
 
-企业微信 provider 会发一条文字，并把最新的 `td_detail.pdf` 作为文件消息上传。
+企业微信 provider 会发一条文字，并把最新的 `*_解答.pdf` 作为文件消息上传。
 
 ## 控制台
 
@@ -171,7 +173,7 @@ Canvas API ──► app/canvas.py ──► data/canvas_state.json
 app/pipeline.py ──► extract.py ──► quality.py ──► analyze.py ──► td_render.py
                                                           │
                                                           ▼
-                                                    out/.../td_detail.pdf
+                                                    out/.../Algèbre_I_TD7_解答.pdf
 ```
 
 | 路径 | 作用 |

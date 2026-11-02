@@ -9,6 +9,7 @@ from pathlib import Path
 
 import paths
 import notify
+import figures
 from analyze import analyze
 from extract import extract
 from quality import gate
@@ -20,6 +21,12 @@ def _slug(text: str) -> str:
     return s.strip("_").lower() or "td"
 
 
+def _doc_stem(course: str, td: str) -> str:
+    stem = f"{course}_{td}_解答"
+    stem = re.sub(r'[\\/:*?"<>|]+', "_", stem)
+    return re.sub(r"\s+", "_", stem).strip("_")
+
+
 def process_pdf(pdf_path: str | Path, course: str, td: str,
                 out_dir: str | Path | None = None,
                 model: str | None = None,
@@ -27,6 +34,7 @@ def process_pdf(pdf_path: str | Path, course: str, td: str,
     pdf = Path(pdf_path)
     out = Path(out_dir) if out_dir else paths.OUT / f"{_slug(course)}_{td.lower()}"
     out.mkdir(parents=True, exist_ok=True)
+    doc_stem = _doc_stem(course, td)
 
     txt = paths.INBOX / f"{_slug(course)}_{td.lower()}_{pdf.stem}.txt"
     text = extract(pdf, txt)
@@ -35,10 +43,17 @@ def process_pdf(pdf_path: str | Path, course: str, td: str,
         raise RuntimeError(f"quality gate failed: {q['reasons']}")
 
     data, raw, usage = analyze(course, td, text, model=model, max_tokens=max_tokens)
+    try:
+        figures.attach(pdf, out, data)
+    except Exception:
+        # Figure extraction must not block text/PDF generation.
+        pass
     (out / "llm_raw.json").write_text(raw, encoding="utf-8")
+    (out / f"{doc_stem}.json").write_text(
+        json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     (out / "td_detail.json").write_text(
         json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-    result = render_json(out / "td_detail.json", out / "td_detail.pdf")
+    result = render_json(out / f"{doc_stem}.json", out / f"{doc_stem}.pdf")
 
     notify_result = None
     try:

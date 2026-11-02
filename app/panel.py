@@ -72,6 +72,7 @@ def _latest_pdf() -> str | None:
     files = []
     for root in (paths.DATA_DIR / "out", paths.OUT):
         if root.exists():
+            files.extend(root.rglob("*_解答.pdf"))
             files.extend(root.rglob("td_detail.pdf"))
     return str(max(files, key=lambda p: p.stat().st_mtime)) if files else None
 

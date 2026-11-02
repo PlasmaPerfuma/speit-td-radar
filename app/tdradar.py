@@ -207,6 +207,7 @@ def latest_pdf() -> str | None:
     files: list[Path] = []
     for root in roots:
         if root.exists():
+            files.extend(root.rglob("*_解答.pdf"))
             files.extend(root.rglob("td_detail.pdf"))
     if not files:
         return None

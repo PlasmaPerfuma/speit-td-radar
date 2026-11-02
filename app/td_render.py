@@ -39,6 +39,7 @@ TOKEN = re.compile(r"(\$[^$]+\$)")
 
 PREAMBLE = r"""\documentclass[UTF8,a4paper,10pt]{ctexart}
 \usepackage{amsmath,amssymb}
+\usepackage{graphicx}
 \setmainfont{Tahoma}
 \setsansfont{Tahoma}
 \setCJKmainfont{SimHei}
@@ -188,6 +189,17 @@ def build_latex(data: dict) -> str:
         lines.append(r"\hspace*{1em}" + zh(exercise.get("statement_zh", "")) + r"\par")
         for note in exercise.get("statement_notes") or []:
             lines.append(r"\hspace*{1em}· " + zh(note) + r"\par")
+        for fig in exercise.get("figures") or []:
+            path = Path(fig.get("path", ""))
+            if not path.is_file():
+                continue
+            lines.append(r"\begin{center}")
+            lines.append(
+                r"\includegraphics[width=.88\linewidth,height=.36\textheight,"
+                r"keepaspectratio]{\detokenize{" + path.as_posix() + r"}}")
+            if fig.get("caption"):
+                lines.append(r"\\[.5mm]{\small " + zh(fig["caption"]) + r"}")
+            lines.append(r"\end{center}")
 
         if exercise.get("knowledge"):
             lines.append(r"\glNeedspace{4\baselineskip}")
